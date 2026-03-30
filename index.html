@@ -2,42 +2,82 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Private Chat & Photo Share</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nishad Private Chat</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Mobile height fix */
+        .chat-container {
+            height: 100dvh; /* Dynamic viewport height for mobile browsers */
+        }
+        #messages::-webkit-scrollbar {
+            width: 4px;
+        }
+        #messages::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 10px;
+        }
+    </style>
 </head>
-<body class="bg-slate-900 text-white font-sans">
+<body class="bg-slate-950 text-white overflow-hidden">
 
-    <div id="login-screen" class="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4">
-        <div class="bg-slate-800 p-6 rounded-2xl shadow-2xl w-full max-w-sm border border-slate-700">
-            <h2 class="text-2xl font-bold mb-6 text-center text-blue-400">Join Chat Room</h2>
-            <div class="space-y-4">
-                <input type="text" id="room-input" placeholder="Enter Room Name (e.g. MySecretGroup)" class="w-full p-3 bg-slate-700 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <input type="text" id="user-input" placeholder="Your Name" class="w-full p-3 bg-slate-700 border border-slate-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <button id="join-btn" class="w-full bg-blue-600 hover:bg-blue-700 p-3 rounded-lg font-bold transition-all shadow-lg active:scale-95">Enter Chat</button>
+    <div id="login-screen" class="fixed inset-0 bg-slate-950 flex items-center justify-center z-50 p-6">
+        <div class="bg-slate-900 p-8 rounded-3xl shadow-2xl w-full max-w-md border border-slate-800">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-extrabold text-blue-500">Join Room</h2>
+                <p class="text-slate-400 text-sm mt-2">Enter same room name to chat together</p>
+            </div>
+            <div class="space-y-5">
+                <div>
+                    <label class="text-xs font-bold text-slate-500 uppercase ml-1">Room Name</label>
+                    <input type="text" id="room-input" placeholder="e.g. nishad_pro" 
+                           class="w-full p-4 bg-slate-800 border border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-600 transition">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-slate-500 uppercase ml-1">Your Nickname</label>
+                    <input type="text" id="user-input" placeholder="Your Name" 
+                           class="w-full p-4 bg-slate-800 border border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-600 transition">
+                </div>
+                <button id="join-btn" class="w-full bg-blue-600 hover:bg-blue-700 p-4 rounded-2xl font-bold text-lg shadow-lg shadow-blue-900/20 active:scale-95 transition-all">
+                    Start Chatting
+                </button>
             </div>
         </div>
     </div>
 
-    <div id="chat-ui" class="hidden max-w-2xl mx-auto h-screen flex flex-col">
-        <header class="p-4 bg-slate-800 border-b border-slate-700 flex justify-between items-center">
-            <div>
-                <h1 id="room-display" class="font-bold text-blue-400 text-lg">Room: ...</h1>
-                <p id="user-display" class="text-xs text-slate-400"></p>
+    <div id="chat-ui" class="hidden chat-container flex flex-col max-w-2xl mx-auto border-x border-slate-800 shadow-2xl bg-slate-900">
+        <header class="p-4 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 flex justify-between items-center shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center font-bold" id="room-icon">#</div>
+                <div>
+                    <h1 id="room-display" class="font-bold text-white text-base leading-none">Room</h1>
+                    <span id="user-display" class="text-[10px] text-blue-400 font-medium"></span>
+                </div>
             </div>
-            <button onclick="location.reload()" class="text-xs bg-slate-700 px-3 py-1 rounded hover:bg-red-900">Leave</button>
+            <button onclick="location.reload()" class="bg-slate-800 p-2 px-4 rounded-xl text-xs font-bold text-slate-400 hover:bg-red-900/30 hover:text-red-400 transition">Exit</button>
         </header>
 
-        <div id="messages" class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-900">
+        <div id="messages" class="flex-1 overflow-y-auto p-4 space-y-4 bg-[url('https://www.transparenttextures.com/patterns/dark-matter.png')]">
             </div>
 
-        <footer class="p-4 bg-slate-800 flex items-center gap-3">
-            <label class="cursor-pointer bg-slate-700 p-2.5 rounded-full hover:bg-slate-600 transition" title="Send Photo">
-                📷
-                <input type="file" id="image-input" class="hidden" accept="image/*">
-            </label>
-            <input type="text" id="msg-input" placeholder="Type message..." class="flex-1 bg-slate-700 p-2.5 rounded-full px-4 outline-none focus:ring-1 focus:ring-blue-500">
-            <button id="send-btn" class="bg-blue-600 p-2.5 rounded-full px-5 font-bold hover:bg-blue-500 transition shadow-md">Send</button>
+        <footer class="p-4 bg-slate-900 border-t border-slate-800 shrink-0">
+            <div class="flex items-end gap-2 bg-slate-800 p-2 rounded-2xl border border-slate-700">
+                <label class="cursor-pointer p-3 text-slate-400 hover:text-blue-400 transition shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <input type="file" id="image-input" class="hidden" accept="image/*">
+                </label>
+                
+                <textarea id="msg-input" rows="1" placeholder="Type a message..." 
+                          class="flex-1 bg-transparent p-3 outline-none resize-none text-sm max-h-32"></textarea>
+                
+                <button id="send-btn" class="bg-blue-600 p-3 rounded-xl text-white hover:bg-blue-500 transition shadow-md active:scale-90 shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                    </svg>
+                </button>
+            </div>
         </footer>
     </div>
 
@@ -63,12 +103,12 @@
         let currentRoom = "";
         let userName = "";
 
-        // UI Elements
         const loginScreen = document.getElementById('login-screen');
         const chatUi = document.getElementById('chat-ui');
         const msgDiv = document.getElementById('messages');
+        const msgInput = document.getElementById('msg-input');
 
-        // Join Room Logic
+        // Enter Chat
         document.getElementById('join-btn').onclick = () => {
             currentRoom = document.getElementById('room-input').value.trim().toLowerCase();
             userName = document.getElementById('user-input').value.trim();
@@ -76,15 +116,16 @@
             if (currentRoom && userName) {
                 loginScreen.classList.add('hidden');
                 chatUi.classList.remove('hidden');
-                document.getElementById('room-display').innerText = `Room: ${currentRoom}`;
-                document.getElementById('user-display').innerText = `Logged in as: ${userName}`;
+                document.getElementById('room-display').innerText = currentRoom;
+                document.getElementById('room-icon').innerText = currentRoom.charAt(0).toUpperCase();
+                document.getElementById('user-display').innerText = `as ${userName}`;
                 listenMessages();
             } else {
-                alert("Please enter both Room and User name!");
+                alert("Please enter Room Name and Nickname");
             }
         };
 
-        // Listen for messages
+        // Real-time listener
         function listenMessages() {
             const q = query(
                 collection(db, "chats"),
@@ -97,27 +138,28 @@
                 snapshot.forEach((doc) => {
                     const data = doc.data();
                     const isMe = data.user === userName;
-                    const messageElement = document.createElement('div');
-                    messageElement.className = `flex ${isMe ? 'justify-end' : 'justify-start'}`;
                     
-                    messageElement.innerHTML = `
-                        <div class="${isMe ? 'bg-blue-600 text-white rounded-br-none' : 'bg-slate-700 text-slate-100 rounded-bl-none'} p-3 rounded-2xl max-w-[80%] shadow-md">
-                            <p class="text-[10px] ${isMe ? 'text-blue-200' : 'text-slate-400'} font-bold uppercase mb-1">${data.user}</p>
-                            ${data.type === 'text' ? `<p class="text-sm">${data.content}</p>` : `<img src="${data.content}" class="rounded-lg mt-1 max-h-60 w-full object-cover">`}
+                    const wrapper = document.createElement('div');
+                    wrapper.className = `flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-in fade-in duration-300`;
+                    
+                    wrapper.innerHTML = `
+                        <div class="max-w-[85%] ${isMe ? 'bg-blue-600 rounded-2xl rounded-tr-none text-white' : 'bg-slate-800 rounded-2xl rounded-tl-none text-slate-100'} p-3 shadow-lg border border-white/5">
+                            <p class="text-[9px] font-black uppercase tracking-widest opacity-60 mb-1">${isMe ? 'You' : data.user}</p>
+                            ${data.type === 'text' ? `<p class="text-sm leading-relaxed">${data.content}</p>` : `<img src="${data.content}" class="rounded-lg mt-1 max-h-64 object-contain bg-slate-900 border border-white/10">`}
                         </div>
                     `;
-                    msgDiv.appendChild(messageElement);
+                    msgDiv.appendChild(wrapper);
                 });
                 msgDiv.scrollTop = msgDiv.scrollHeight;
             });
         }
 
         // Send Text
-        async function sendMsg() {
-            const input = document.getElementById('msg-input');
-            const text = input.value.trim();
+        async function sendMessage() {
+            const text = msgInput.value.trim();
             if (text) {
-                input.value = "";
+                msgInput.value = "";
+                msgInput.style.height = 'auto';
                 await addDoc(collection(db, "chats"), {
                     room: currentRoom,
                     user: userName,
@@ -128,25 +170,34 @@
             }
         }
 
-        document.getElementById('send-btn').onclick = sendMsg;
-        document.getElementById('msg-input').onkeypress = (e) => { if(e.key === 'Enter') sendMsg(); };
+        document.getElementById('send-btn').onclick = sendMessage;
+        msgInput.onkeydown = (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } };
 
-        // Send Photo
+        // Auto-resize textarea
+        msgInput.oninput = () => {
+            msgInput.style.height = 'auto';
+            msgInput.style.height = msgInput.scrollHeight + 'px';
+        };
+
+        // Upload Image
         document.getElementById('image-input').onchange = async (e) => {
             const file = e.target.files[0];
             if (!file) return;
 
             const storageRef = ref(storage, `chats/${currentRoom}/${Date.now()}_${file.name}`);
-            const uploadTask = await uploadBytes(storageRef, file);
-            const url = await getDownloadURL(uploadTask.ref);
-
-            await addDoc(collection(db, "chats"), {
-                room: currentRoom,
-                user: userName,
-                content: url,
-                type: 'image',
-                timestamp: serverTimestamp()
-            });
+            try {
+                const uploadTask = await uploadBytes(storageRef, file);
+                const url = await getDownloadURL(uploadTask.ref);
+                await addDoc(collection(db, "chats"), {
+                    room: currentRoom,
+                    user: userName,
+                    content: url,
+                    type: 'image',
+                    timestamp: serverTimestamp()
+                });
+            } catch (err) {
+                alert("Upload failed! Make sure Storage rules are public.");
+            }
         };
     </script>
 </body>
