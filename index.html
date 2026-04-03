@@ -1,85 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nishad Private Chat & Video</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    <style>
-        .chat-container { height: 100dvh; }
-        #messages::-webkit-scrollbar { width: 4px; }
-        #messages::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 10px; }
-
-        #video-frame {
-            position: absolute;
-            top: 10px; left: 10px; right: 10px;
-            height: 35%; background: #000;
-            border-radius: 24px; overflow: hidden;
-            z-index: 40; display: none;
-        }
-
-        #remote-video { width: 100%; height: 100%; object-fit: cover; }
-
-        #local-video-container {
-            position: absolute;
-            bottom: 10px; right: 10px;
-            width: 80px; aspect-ratio: 3/4;
-            border-radius: 12px; overflow: hidden;
-            border: 2px solid #3b82f6;
-        }
-
-        #local-video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
-
-        .msg-with-video { margin-top: 40% !important; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nishad Chat v2</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+  ::-webkit-scrollbar-thumb:hover { background: #475569; }
+  
+  .chat-bg { background-color: #0f172a; background-image: url("https://www.transparenttextures.com/patterns/cubes.png"); }
+</style>
 </head>
 
-<body class="bg-slate-950 text-white overflow-hidden">
+<body class="bg-slate-950 text-slate-100 font-sans antialiased">
 
-<!-- LOGIN -->
-<div id="login-screen" class="fixed inset-0 flex items-center justify-center">
-    <div class="bg-slate-900 p-6 rounded-2xl">
-        <input id="room-input" placeholder="Room" class="p-3 m-2 bg-slate-800">
-        <input id="user-input" placeholder="Name" class="p-3 m-2 bg-slate-800">
-        <button id="join-btn" class="bg-blue-600 p-3 w-full">Join</button>
+<div id="login-screen" class="fixed inset-0 flex items-center justify-center z-50 px-4 transition-all duration-500">
+  <div class="bg-slate-900 p-8 rounded-2xl shadow-2xl border border-slate-800 w-full max-w-md">
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">Nishad Chat</h1>
+        <p class="text-slate-400 text-sm mt-2">Enter a room to start vibing</p>
     </div>
+    <div class="space-y-4">
+        <input id="room-input" placeholder="Room ID (e.g. Friends)" class="w-full p-3 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+        <input id="user-input" placeholder="Your Name" class="w-full p-3 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+        <button id="join-btn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold p-3 rounded-lg shadow-lg transform active:scale-95 transition-all mt-4">
+            Join Chat
+        </button>
+    </div>
+  </div>
 </div>
 
-<!-- CHAT -->
-<div id="chat-ui" class="hidden chat-container flex flex-col max-w-2xl mx-auto bg-slate-900 relative">
+<div id="chat-ui" class="hidden flex flex-col h-screen max-w-2xl mx-auto border-x border-slate-800 bg-slate-900 shadow-2xl">
 
-<header class="p-4 flex justify-between">
-    <h1 id="room-display"></h1>
-    <span id="user-display"></span>
-</header>
+  <div class="p-4 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 flex justify-between items-center sticky top-0 z-10">
+    <div>
+        <h2 id="room-display" class="font-bold text-blue-400 text-lg">Room</h2>
+        <p id="user-display" class="text-xs text-emerald-400 animate-pulse">Waiting...</p>
+    </div>
+    <div class="h-10 w-10 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700">
+        <span class="text-xl">💬</span>
+    </div>
+  </div>
 
-<div id="messages" class="flex-1 overflow-y-auto p-4"></div>
+  <div id="messages" class="flex-1 overflow-auto p-4 space-y-4 chat-bg">
+    </div>
 
-<footer class="p-4 flex">
-    <input id="msg-input" class="flex-1 bg-slate-800 p-2">
-    <button id="send-btn" class="bg-blue-600 p-2">Send</button>
-</footer>
-
-<input type="file" id="image-input" hidden>
+  <div class="p-4 bg-slate-900 border-t border-slate-800">
+    <div class="flex items-center bg-slate-800 rounded-full px-4 py-2 focus-within:ring-2 focus-within:ring-blue-500/50 transition-all">
+        <input id="msg-input" placeholder="Type a message..." class="flex-1 bg-transparent border-none focus:outline-none py-2 text-slate-200">
+        <button id="send-btn" class="ml-2 bg-blue-600 hover:bg-blue-500 p-2 rounded-full transition-colors group">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transform group-hover:rotate-12 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            </svg>
+        </button>
+    </div>
+  </div>
 
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import { getFirestore, collection, addDoc, query, where, onSnapshot, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
+import { getFirestore, collection, addDoc, query, where, onSnapshot, doc, setDoc, orderBy } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
+// --- PASTE YOUR FIREBASE CONFIG HERE ---
 const firebaseConfig = {
- apiKey: "AIzaSyD3HUZgZ1G2hN4BXnIbRV8eD0nPlWUaByM",
- authDomain: "galk-55f49.firebaseapp.com",
- projectId: "galk-55f49",
- storageBucket: "galk-55f49.firebasestorage.app",
+  apiKey: "YOUR_KEY",
+  authDomain: "YOUR_DOMAIN",
+  projectId: "YOUR_ID"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const storage = getStorage(app);
 
 let currentRoom, userName;
 
@@ -88,130 +83,109 @@ const msgInput = document.getElementById('msg-input');
 
 // JOIN
 document.getElementById('join-btn').onclick = async () => {
-    currentRoom = document.getElementById('room-input').value.trim();
-    userName = document.getElementById('user-input').value.trim();
+  currentRoom = document.getElementById('room-input').value.trim();
+  userName = document.getElementById('user-input').value.trim();
 
-    if (!currentRoom || !userName) return alert("Fill all");
+  if (!currentRoom || !userName) return alert("Bhai, name aur room toh daal de!");
 
-    login-screen.classList.add('hidden');
-    chat-ui.classList.remove('hidden');
+  document.getElementById('login-screen').classList.add('opacity-0', 'pointer-events-none');
+  setTimeout(() => {
+      document.getElementById('login-screen').classList.add('hidden');
+      document.getElementById('chat-ui').classList.remove('hidden');
+  }, 500);
 
-    listenMessages();
-    listenTyping();
-    listenOnline();
+  document.getElementById('room-display').innerText = `# ${currentRoom}`;
+  
+  listenMessages();
+  listenTyping();
+  listenOnline();
 
-    await setDoc(doc(db,"online",userName),{
-        room:currentRoom
-    });
+  await setDoc(doc(db,"online",userName),{ room:currentRoom });
 };
 
-// SEND MSG
-async function sendMessage(){
-    const text = msgInput.value.trim();
-    if(!text) return;
+// SEND
+document.getElementById('send-btn').onclick = async () => {
+  const text = msgInput.value.trim();
+  if (!text) return;
+  msgInput.value = "";
+  await addDoc(collection(db,"chats"),{
+    room:currentRoom,
+    user:userName,
+    content:text,
+    timestamp:new Date().getTime(),
+    seenBy:[userName]
+  });
+};
 
-    msgInput.value="";
-
-    await addDoc(collection(db,"chats"),{
-        room:currentRoom,
-        user:userName,
-        content:text,
-        type:'text',
-        timestamp:new Date(),
-        seenBy:[userName]
-    });
-}
-
-document.getElementById('send-btn').onclick = sendMessage;
+// Enter key to send
+msgInput.addEventListener("keypress", (e) => {
+    if(e.key === "Enter") document.getElementById('send-btn').click();
+});
 
 // LISTEN MSG
 function listenMessages(){
-    const q = query(collection(db,"chats"), where("room","==",currentRoom));
+  const q = query(collection(db,"chats"), where("room","==",currentRoom), orderBy("timestamp", "asc"));
 
-    onSnapshot(q,snap=>{
-        msgDiv.innerHTML="";
+  onSnapshot(q, snap=>{
+    msgDiv.innerHTML="";
 
-        snap.forEach(d=>{
-            const data=d.data();
-            const isMe = data.user===userName;
+    snap.forEach(d=>{
+      const data = d.data();
+      const isMe = data.user === userName;
 
-            if(!data.seenBy.includes(userName)){
-                setDoc(doc(db,"chats",d.id),{
-                    seenBy:[...data.seenBy,userName]
-                },{merge:true});
-            }
+      if (!data.seenBy.includes(userName)) {
+        setDoc(doc(db,"chats",d.id),{ seenBy:[...data.seenBy,userName] },{merge:true});
+      }
 
-            let time=new Date(data.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+      let time = new Date(data.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
 
-            const div=document.createElement("div");
-            div.className = isMe ? "text-right" : "text-left";
-
-            div.innerHTML = `
-            <div class="inline-block ${isMe?'bg-blue-600':'bg-slate-800'} p-2 rounded m-1">
-                <small>${isMe?'YOU':data.user}</small><br>
-                ${data.type==='text'?data.content:`<img src="${data.content}" width="150">`}
-                <div style="font-size:10px">${time}</div>
-                ${isMe ? (data.seenBy.length>1?"✔✔":"✔") : ""}
-            </div>`;
-
-            msgDiv.appendChild(div);
-        });
-
-        msgDiv.scrollTop = msgDiv.scrollHeight;
+      const msgHTML = `
+      <div class="flex ${isMe ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <div class="max-w-[80%] ${isMe ? 'bg-blue-600 text-white rounded-l-xl rounded-tr-xl' : 'bg-slate-800 text-slate-100 rounded-r-xl rounded-tl-xl'} p-3 shadow-md relative">
+          ${!isMe ? `<div class="text-[10px] font-bold text-blue-400 mb-1 uppercase">${data.user}</div>` : ''}
+          <p class="text-sm leading-relaxed">${data.content}</p>
+          <div class="flex items-center justify-end gap-1 mt-1 opacity-70">
+            <span class="text-[9px]">${time}</span>
+            ${isMe ? `<span class="text-[10px]">${data.seenBy.length > 1 ? '✓✓' : '✓'}</span>` : ''}
+          </div>
+        </div>
+      </div>`;
+      
+      msgDiv.insertAdjacentHTML('beforeend', msgHTML);
     });
+    msgDiv.scrollTop = msgDiv.scrollHeight;
+  });
 }
 
-// ONLINE
+// ONLINE COUNT
 function listenOnline(){
-    onSnapshot(collection(db,"online"),snap=>{
-        let count=0;
-        snap.forEach(d=>{
-            if(d.data().room===currentRoom) count++;
-        });
-
-        document.getElementById('room-display').innerText = `${currentRoom} (${count} online)`;
-    });
+  onSnapshot(collection(db,"online"), snap=>{
+    let count=0;
+    snap.forEach(d=>{ if(d.data().room===currentRoom) count++; });
+    document.getElementById('room-display').innerHTML = `#${currentRoom} <span class="text-xs font-normal text-slate-500 ml-2">(${count} online)</span>`;
+  });
 }
 
-// TYPING
+// TYPING LOGIC
 msgInput.addEventListener("input", async ()=>{
-    await setDoc(doc(db,"typing",userName),{
-        room:currentRoom,
-        typing: msgInput.value.length>0
-    });
+  await setDoc(doc(db,"typing",userName),{
+    room:currentRoom,
+    typing: msgInput.value.length > 0
+  });
 });
 
 function listenTyping(){
-    onSnapshot(collection(db,"typing"),snap=>{
-        let t="";
-        snap.forEach(d=>{
-            if(d.data().room===currentRoom && d.data().typing && d.id!==userName){
-                t = d.id+" typing...";
-            }
-        });
-
-        document.getElementById('user-display').innerText = t || `as ${userName}`;
+  onSnapshot(collection(db,"typing"), snap=>{
+    let t="";
+    snap.forEach(d=>{
+      if(d.data().room===currentRoom && d.data().typing && d.id!==userName){
+        t = d.id+" is typing...";
+      }
     });
+    document.getElementById('user-display').innerText = t || `Active as ${userName}`;
+    document.getElementById('user-display').className = t ? "text-xs text-emerald-400 animate-pulse" : "text-xs text-slate-500";
+  });
 }
-
-// IMAGE
-document.getElementById('image-input').onchange = async (e)=>{
-    const file = e.target.files[0];
-    if(!file) return;
-
-    const sRef = ref(storage, `chat/${Date.now()}`);
-    const up = await uploadBytes(sRef,file);
-    const url = await getDownloadURL(up.ref);
-
-    await addDoc(collection(db,"chats"),{
-        room:currentRoom,
-        user:userName,
-        content:url,
-        type:'image',
-        timestamp:new Date(),
-        seenBy:[userName]
-    });
-};
 </script>
 
 </body>
