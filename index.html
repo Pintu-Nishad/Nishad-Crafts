@@ -1,127 +1,217 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nishad Private Chat</title>
-<script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nishad Private Chat & Video</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        .chat-container { height: 100dvh; }
+        #messages::-webkit-scrollbar { width: 4px; }
+        #messages::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 10px; }
+
+        #video-frame {
+            position: absolute;
+            top: 10px; left: 10px; right: 10px;
+            height: 35%; background: #000;
+            border-radius: 24px; overflow: hidden;
+            z-index: 40; display: none;
+        }
+
+        #remote-video { width: 100%; height: 100%; object-fit: cover; }
+
+        #local-video-container {
+            position: absolute;
+            bottom: 10px; right: 10px;
+            width: 80px; aspect-ratio: 3/4;
+            border-radius: 12px; overflow: hidden;
+            border: 2px solid #3b82f6;
+        }
+
+        #local-video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+
+        .msg-with-video { margin-top: 40% !important; }
+    </style>
 </head>
 
-<body class="bg-slate-950 text-white">
+<body class="bg-slate-950 text-white overflow-hidden">
 
-<div id="login" class="h-screen flex items-center justify-center">
-    <div class="bg-slate-900 p-6 rounded-xl">
-        <input id="room" placeholder="Room" class="p-2 m-2 text-black">
-        <input id="name" placeholder="Name" class="p-2 m-2 text-black">
-        <button id="join" class="bg-blue-500 p-2">Join</button>
+<!-- LOGIN -->
+<div id="login-screen" class="fixed inset-0 flex items-center justify-center">
+    <div class="bg-slate-900 p-6 rounded-2xl">
+        <input id="room-input" placeholder="Room" class="p-3 m-2 bg-slate-800">
+        <input id="user-input" placeholder="Name" class="p-3 m-2 bg-slate-800">
+        <button id="join-btn" class="bg-blue-600 p-3 w-full">Join</button>
     </div>
 </div>
 
-<div id="chat" class="hidden p-4">
-    <h2 id="roomName"></h2>
-    <p id="typing"></p>
-    <div id="msgs" class="h-[300px] overflow-auto border"></div>
+<!-- CHAT -->
+<div id="chat-ui" class="hidden chat-container flex flex-col max-w-2xl mx-auto bg-slate-900 relative">
 
-    <input id="msg" placeholder="Type..." class="text-black p-2">
-    <button id="send">Send</button>
+<header class="p-4 flex justify-between">
+    <h1 id="room-display"></h1>
+    <span id="user-display"></span>
+</header>
+
+<div id="messages" class="flex-1 overflow-y-auto p-4"></div>
+
+<footer class="p-4 flex">
+    <input id="msg-input" class="flex-1 bg-slate-800 p-2">
+    <button id="send-btn" class="bg-blue-600 p-2">Send</button>
+</footer>
+
+<input type="file" id="image-input" hidden>
+
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
 import { getFirestore, collection, addDoc, query, where, onSnapshot, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
 
 const firebaseConfig = {
- apiKey: "YOUR_KEY",
- authDomain: "YOUR_DOMAIN",
- projectId: "YOUR_ID"
+ apiKey: "AIzaSyD3HUZgZ1G2hN4BXnIbRV8eD0nPlWUaByM",
+ authDomain: "galk-55f49.firebaseapp.com",
+ projectId: "galk-55f49",
+ storageBucket: "galk-55f49.firebasestorage.app",
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const storage = getStorage(app);
 
-let room, name;
+let currentRoom, userName;
 
-join.onclick = async () => {
-    room = roomInput.value;
-    name = nameInput.value;
+const msgDiv = document.getElementById('messages');
+const msgInput = document.getElementById('msg-input');
 
-    login.classList.add("hidden");
-    chat.classList.remove("hidden");
+// JOIN
+document.getElementById('join-btn').onclick = async () => {
+    currentRoom = document.getElementById('room-input').value.trim();
+    userName = document.getElementById('user-input').value.trim();
 
-    listenMsgs();
-    online();
-    typingListen();
+    if (!currentRoom || !userName) return alert("Fill all");
 
-    await setDoc(doc(db,"online",name),{room});
-};
+    login-screen.classList.add('hidden');
+    chat-ui.classList.remove('hidden');
 
-send.onclick = async () => {
-    const text = msg.value;
-    msg.value="";
+    listenMessages();
+    listenTyping();
+    listenOnline();
 
-    await addDoc(collection(db,"chats"),{
-        room,
-        user:name,
-        text,
-        time:new Date(),
-        seen:[]
+    await setDoc(doc(db,"online",userName),{
+        room:currentRoom
     });
 };
 
-function listenMsgs(){
-    const q = query(collection(db,"chats"), where("room","==",room));
+// SEND MSG
+async function sendMessage(){
+    const text = msgInput.value.trim();
+    if(!text) return;
+
+    msgInput.value="";
+
+    await addDoc(collection(db,"chats"),{
+        room:currentRoom,
+        user:userName,
+        content:text,
+        type:'text',
+        timestamp:new Date(),
+        seenBy:[userName]
+    });
+}
+
+document.getElementById('send-btn').onclick = sendMessage;
+
+// LISTEN MSG
+function listenMessages(){
+    const q = query(collection(db,"chats"), where("room","==",currentRoom));
 
     onSnapshot(q,snap=>{
-        msgs.innerHTML="";
-        snap.forEach(d=>{
-            const data = d.data();
+        msgDiv.innerHTML="";
 
-            if(!data.seen.includes(name)){
+        snap.forEach(d=>{
+            const data=d.data();
+            const isMe = data.user===userName;
+
+            if(!data.seenBy.includes(userName)){
                 setDoc(doc(db,"chats",d.id),{
-                    seen:[...data.seen,name]
+                    seenBy:[...data.seenBy,userName]
                 },{merge:true});
             }
 
-            let t = new Date(data.time).toLocaleTimeString();
+            let time=new Date(data.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
 
-            msgs.innerHTML += `
-            <div>
-                <b>${data.user}</b>: ${data.text}
-                <small>${t}</small>
-                ${data.user===name ? (data.seen.length>1?"✔✔":"✔"):""}
+            const div=document.createElement("div");
+            div.className = isMe ? "text-right" : "text-left";
+
+            div.innerHTML = `
+            <div class="inline-block ${isMe?'bg-blue-600':'bg-slate-800'} p-2 rounded m-1">
+                <small>${isMe?'YOU':data.user}</small><br>
+                ${data.type==='text'?data.content:`<img src="${data.content}" width="150">`}
+                <div style="font-size:10px">${time}</div>
+                ${isMe ? (data.seenBy.length>1?"✔✔":"✔") : ""}
             </div>`;
+
+            msgDiv.appendChild(div);
         });
+
+        msgDiv.scrollTop = msgDiv.scrollHeight;
     });
 }
 
-function online(){
+// ONLINE
+function listenOnline(){
     onSnapshot(collection(db,"online"),snap=>{
         let count=0;
         snap.forEach(d=>{
-            if(d.data().room===room) count++;
+            if(d.data().room===currentRoom) count++;
         });
-        roomName.innerText = room + " ("+count+" online)";
+
+        document.getElementById('room-display').innerText = `${currentRoom} (${count} online)`;
     });
 }
 
-msg.addEventListener("input", async ()=>{
-    await setDoc(doc(db,"typing",name),{
-        room,
-        typing: msg.value.length>0
+// TYPING
+msgInput.addEventListener("input", async ()=>{
+    await setDoc(doc(db,"typing",userName),{
+        room:currentRoom,
+        typing: msgInput.value.length>0
     });
 });
 
-function typingListen(){
+function listenTyping(){
     onSnapshot(collection(db,"typing"),snap=>{
         let t="";
         snap.forEach(d=>{
-            if(d.data().room===room && d.data().typing && d.id!==name){
-                t = d.id + " typing...";
+            if(d.data().room===currentRoom && d.data().typing && d.id!==userName){
+                t = d.id+" typing...";
             }
         });
-        typing.innerText = t;
+
+        document.getElementById('user-display').innerText = t || `as ${userName}`;
     });
 }
+
+// IMAGE
+document.getElementById('image-input').onchange = async (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+
+    const sRef = ref(storage, `chat/${Date.now()}`);
+    const up = await uploadBytes(sRef,file);
+    const url = await getDownloadURL(up.ref);
+
+    await addDoc(collection(db,"chats"),{
+        room:currentRoom,
+        user:userName,
+        content:url,
+        type:'image',
+        timestamp:new Date(),
+        seenBy:[userName]
+    });
+};
 </script>
 
 </body>
