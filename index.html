@@ -6,12 +6,9 @@
 <title>Nishad Chat v2</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
-  /* Custom Scrollbar */
   ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-  ::-webkit-scrollbar-thumb:hover { background: #475569; }
-  
   .chat-bg { background-color: #0f172a; background-image: url("https://www.transparenttextures.com/patterns/cubes.png"); }
 </style>
 </head>
@@ -19,91 +16,75 @@
 <body class="bg-slate-950 text-slate-100 font-sans antialiased">
 
 <div id="login-screen" class="fixed inset-0 flex items-center justify-center z-50 px-4 transition-all duration-500">
-  <div class="bg-slate-900 p-8 rounded-2xl shadow-2xl border border-slate-800 w-full max-w-md">
-    <div class="text-center mb-8">
-        <h1 class="text-3xl font-bold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">Nishad Chat</h1>
-        <p class="text-slate-400 text-sm mt-2">Enter a room to start vibing</p>
-    </div>
-    <div class="space-y-4">
-        <input id="room-input" placeholder="Room ID (e.g. Friends)" class="w-full p-3 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+  <div class="bg-slate-900 p-8 rounded-2xl shadow-2xl border border-slate-800 w-full max-w-md text-center">
+    <h1 class="text-3xl font-bold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent mb-6">Nishad Chat</h1>
+    <div class="space-y-4 text-left">
+        <input id="room-input" placeholder="Room Name (e.g. Haryana)" class="w-full p-3 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
         <input id="user-input" placeholder="Your Name" class="w-full p-3 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
-        <button id="join-btn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold p-3 rounded-lg shadow-lg transform active:scale-95 transition-all mt-4">
-            Join Chat
-        </button>
+        <button id="join-btn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold p-3 rounded-lg shadow-lg transform active:scale-95 transition-all mt-4">Join Chat</button>
     </div>
   </div>
 </div>
 
 <div id="chat-ui" class="hidden flex flex-col h-screen max-w-2xl mx-auto border-x border-slate-800 bg-slate-900 shadow-2xl">
-
   <div class="p-4 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 flex justify-between items-center sticky top-0 z-10">
     <div>
         <h2 id="room-display" class="font-bold text-blue-400 text-lg">Room</h2>
-        <p id="user-display" class="text-xs text-emerald-400 animate-pulse">Waiting...</p>
+        <p id="user-display" class="text-xs text-slate-500">Connecting...</p>
     </div>
-    <div class="h-10 w-10 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700">
-        <span class="text-xl">💬</span>
-    </div>
+    <div class="h-10 w-10 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700">💬</div>
   </div>
 
-  <div id="messages" class="flex-1 overflow-auto p-4 space-y-4 chat-bg">
-    </div>
+  <div id="messages" class="flex-1 overflow-auto p-4 space-y-4 chat-bg"></div>
 
   <div class="p-4 bg-slate-900 border-t border-slate-800">
-    <div class="flex items-center bg-slate-800 rounded-full px-4 py-2 focus-within:ring-2 focus-within:ring-blue-500/50 transition-all">
+    <div class="flex items-center bg-slate-800 rounded-full px-4 py-2 focus-within:ring-2 focus-within:ring-blue-500/50">
         <input id="msg-input" placeholder="Type a message..." class="flex-1 bg-transparent border-none focus:outline-none py-2 text-slate-200">
-        <button id="send-btn" class="ml-2 bg-blue-600 hover:bg-blue-500 p-2 rounded-full transition-colors group">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transform group-hover:rotate-12 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-            </svg>
+        <button id="send-btn" class="ml-2 bg-blue-600 hover:bg-blue-500 p-2 rounded-full transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
         </button>
     </div>
   </div>
-
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import { getFirestore, collection, addDoc, query, where, onSnapshot, doc, setDoc, orderBy } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, query, where, onSnapshot, doc, setDoc, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
-// --- PASTE YOUR FIREBASE CONFIG HERE ---
+// TERI CONFIG YAHAN LAG GYI HAI
 const firebaseConfig = {
-  apiKey: "YOUR_KEY",
-  authDomain: "YOUR_DOMAIN",
-  projectId: "YOUR_ID"
+  apiKey: "AIzaSyDMJHzj0g_sRYW2exwyVLZZs4Y_hnnrDNM",
+  authDomain: "p2kc-b0553.firebaseapp.com",
+  databaseURL: "https://p2kc-b0553-default-rtdb.firebaseio.com",
+  projectId: "p2kc-b0553",
+  storageBucket: "p2kc-b0553.firebasestorage.app",
+  messagingSenderId: "939347031406",
+  appId: "1:939347031406:web:998f52b262a0cecf11bd7f",
+  measurementId: "G-55RFHDZ3H0"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 let currentRoom, userName;
-
 const msgDiv = document.getElementById('messages');
 const msgInput = document.getElementById('msg-input');
 
-// JOIN
 document.getElementById('join-btn').onclick = async () => {
   currentRoom = document.getElementById('room-input').value.trim();
   userName = document.getElementById('user-input').value.trim();
+  if (!currentRoom || !userName) return alert("Pehle details bharo!");
 
-  if (!currentRoom || !userName) return alert("Bhai, name aur room toh daal de!");
-
-  document.getElementById('login-screen').classList.add('opacity-0', 'pointer-events-none');
-  setTimeout(() => {
-      document.getElementById('login-screen').classList.add('hidden');
-      document.getElementById('chat-ui').classList.remove('hidden');
-  }, 500);
-
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('chat-ui').classList.remove('hidden');
   document.getElementById('room-display').innerText = `# ${currentRoom}`;
   
   listenMessages();
   listenTyping();
   listenOnline();
-
   await setDoc(doc(db,"online",userName),{ room:currentRoom });
 };
 
-// SEND
 document.getElementById('send-btn').onclick = async () => {
   const text = msgInput.value.trim();
   if (!text) return;
@@ -112,52 +93,46 @@ document.getElementById('send-btn').onclick = async () => {
     room:currentRoom,
     user:userName,
     content:text,
-    timestamp:new Date().getTime(),
+    timestamp: serverTimestamp(),
     seenBy:[userName]
   });
 };
 
-// Enter key to send
-msgInput.addEventListener("keypress", (e) => {
-    if(e.key === "Enter") document.getElementById('send-btn').click();
-});
+msgInput.addEventListener("keypress", (e) => { if(e.key === "Enter") document.getElementById('send-btn').click(); });
 
-// LISTEN MSG
 function listenMessages(){
+  // Note: Agar messages nahi aa rahe, toh browser console check karna, wahan index banane ka link hoga.
   const q = query(collection(db,"chats"), where("room","==",currentRoom), orderBy("timestamp", "asc"));
 
   onSnapshot(q, snap=>{
     msgDiv.innerHTML="";
-
     snap.forEach(d=>{
       const data = d.data();
       const isMe = data.user === userName;
-
       if (!data.seenBy.includes(userName)) {
         setDoc(doc(db,"chats",d.id),{ seenBy:[...data.seenBy,userName] },{merge:true});
       }
-
-      let time = new Date(data.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+      
+      let dateObj = data.timestamp ? data.timestamp.toDate() : new Date();
+      let time = dateObj.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
 
       const msgHTML = `
-      <div class="flex ${isMe ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300">
-        <div class="max-w-[80%] ${isMe ? 'bg-blue-600 text-white rounded-l-xl rounded-tr-xl' : 'bg-slate-800 text-slate-100 rounded-r-xl rounded-tl-xl'} p-3 shadow-md relative">
+      <div class="flex ${isMe ? 'justify-end' : 'justify-start'} animate-in fade-in duration-300">
+        <div class="max-w-[80%] ${isMe ? 'bg-blue-600 text-white rounded-l-xl rounded-tr-xl' : 'bg-slate-800 text-slate-100 rounded-r-xl rounded-tl-xl'} p-3 shadow-md">
           ${!isMe ? `<div class="text-[10px] font-bold text-blue-400 mb-1 uppercase">${data.user}</div>` : ''}
-          <p class="text-sm leading-relaxed">${data.content}</p>
+          <p class="text-sm">${data.content}</p>
           <div class="flex items-center justify-end gap-1 mt-1 opacity-70">
             <span class="text-[9px]">${time}</span>
             ${isMe ? `<span class="text-[10px]">${data.seenBy.length > 1 ? '✓✓' : '✓'}</span>` : ''}
           </div>
         </div>
       </div>`;
-      
       msgDiv.insertAdjacentHTML('beforeend', msgHTML);
     });
     msgDiv.scrollTop = msgDiv.scrollHeight;
   });
 }
 
-// ONLINE COUNT
 function listenOnline(){
   onSnapshot(collection(db,"online"), snap=>{
     let count=0;
@@ -166,27 +141,20 @@ function listenOnline(){
   });
 }
 
-// TYPING LOGIC
 msgInput.addEventListener("input", async ()=>{
-  await setDoc(doc(db,"typing",userName),{
-    room:currentRoom,
-    typing: msgInput.value.length > 0
-  });
+  await setDoc(doc(db,"typing",userName),{ room:currentRoom, typing: msgInput.value.length > 0 });
 });
 
 function listenTyping(){
   onSnapshot(collection(db,"typing"), snap=>{
     let t="";
     snap.forEach(d=>{
-      if(d.data().room===currentRoom && d.data().typing && d.id!==userName){
-        t = d.id+" is typing...";
-      }
+      if(d.data().room===currentRoom && d.data().typing && d.id!==userName) t = d.id+" is typing...";
     });
     document.getElementById('user-display').innerText = t || `Active as ${userName}`;
     document.getElementById('user-display').className = t ? "text-xs text-emerald-400 animate-pulse" : "text-xs text-slate-500";
   });
 }
 </script>
-
 </body>
 </html>
