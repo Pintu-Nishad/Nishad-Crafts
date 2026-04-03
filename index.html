@@ -3,25 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nishad Snap-Chat</title>
+    <title>Nishad Private Snap-Chat</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .chat-container { height: 100dvh; }
-        #messages::-webkit-scrollbar { width: 4px; }
+        body { background-color: #020617; font-family: sans-serif; overflow: hidden; }
+        .chat-container { height: 100dvh; display: flex; flex-direction: column; }
         
-        /* Snapchat Style Floating Video */
+        /* Snapchat Style Video Frame */
         #video-frame {
             position: absolute;
             top: 10px;
             left: 10px;
             right: 10px;
-            height: 40%; /* Badi screen ka 40% hissa video call ke liye */
+            height: 45%;
             background: #000;
-            border-radius: 24px;
+            border-radius: 30px;
             overflow: hidden;
             z-index: 30;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-            display: none; /* Default hidden */
+            display: none; /* Only show when calling */
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
         
         #remote-video { width: 100%; height: 100%; object-fit: cover; }
@@ -30,89 +30,102 @@
             position: absolute;
             bottom: 15px;
             right: 15px;
-            width: 90px;
+            width: 85px;
             aspect-ratio: 3/4;
-            border-radius: 12px;
+            border-radius: 15px;
             overflow: hidden;
-            border: 2px solid #fff;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border: 2px solid rgba(255,255,255,0.8);
             z-index: 40;
+            box-shadow: 0 10px 15px rgba(0,0,0,0.4);
         }
         
         #local-video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
 
         .video-controls {
             position: absolute;
-            top: 15px;
-            right: 15px;
+            top: 20px;
+            right: 20px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 15px;
             z-index: 50;
         }
         
         .control-btn {
-            background: rgba(0,0,0,0.4);
-            backdrop-filter: blur(10px);
-            width: 35px;
-            height: 35px;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(8px);
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
+            color: white;
             border: 1px solid rgba(255,255,255,0.2);
+            font-size: 18px;
         }
 
-        /* Adjustment for chat when video is on */
-        .messages-shift { margin-top: 42% !important; }
+        /* Message Area adjustments */
+        #messages { flex: 1; overflow-y: auto; padding: 20px; transition: all 0.5s ease; }
+        .shifted-messages { margin-top: 50vh; }
+        
+        #messages::-webkit-scrollbar { width: 4px; }
+        #messages::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
     </style>
 </head>
-<body class="bg-slate-950 text-white overflow-hidden">
+<body>
 
     <div id="login-screen" class="fixed inset-0 bg-slate-950 flex items-center justify-center z-[100] p-6">
-        <div class="bg-slate-900 p-8 rounded-3xl w-full max-w-md border border-slate-800">
-            <h2 class="text-2xl font-bold text-blue-500 mb-6 text-center">Nishad Private Call</h2>
-            <input type="text" id="room-input" placeholder="Room Name" class="w-full p-4 bg-slate-800 rounded-2xl mb-4 outline-none">
-            <input type="text" id="user-input" placeholder="Your Name" class="w-full p-4 bg-slate-800 rounded-2xl mb-6 outline-none">
-            <button id="join-btn" class="w-full bg-blue-600 p-4 rounded-2xl font-bold">Join & Chat</button>
+        <div class="bg-slate-900 p-8 rounded-3xl shadow-2xl w-full max-w-md border border-slate-800">
+            <h2 class="text-3xl font-bold text-blue-500 mb-2 text-center">Nishad Chat</h2>
+            <p class="text-slate-400 text-sm text-center mb-8">Enter details to start private session</p>
+            <div class="space-y-4">
+                <input type="text" id="room-input" placeholder="Room Name (e.g. secret123)" class="w-full p-4 bg-slate-800 border border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-600 transition">
+                <input type="text" id="user-input" placeholder="Your Nickname" class="w-full p-4 bg-slate-800 border border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-600 transition">
+                <button id="join-btn" class="w-full bg-blue-600 hover:bg-blue-700 p-4 rounded-2xl font-bold text-lg transition-all active:scale-95">Connect Now</button>
+            </div>
         </div>
     </div>
 
-    <div id="chat-ui" class="hidden chat-container flex flex-col max-w-2xl mx-auto bg-slate-900 relative">
+    <div id="chat-ui" class="hidden chat-container max-w-2xl mx-auto bg-slate-900 relative border-x border-slate-800">
         
         <div id="video-frame">
             <video id="remote-video" autoplay playsinline></video>
-            
             <div id="local-video-container">
                 <video id="local-video" autoplay playsinline muted></video>
             </div>
-
             <div class="video-controls">
-                <button onclick="toggleMic()" id="mic-btn" class="control-btn">🎤</button>
-                <button onclick="toggleCam()" id="cam-btn" class="control-btn">📷</button>
-                <button onclick="minimizeVideo()" class="control-btn">📉</button>
+                <button id="mic-btn" class="control-btn">🎤</button>
+                <button id="cam-btn" class="control-btn">📷</button>
+                <button id="size-btn" class="control-btn">↔️</button>
             </div>
         </div>
 
-        <header class="p-4 border-b border-slate-800 flex justify-between items-center shrink-0">
+        <header class="p-4 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 flex justify-between items-center shrink-0">
             <div class="flex items-center gap-3">
-                <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-xs font-bold" id="room-icon">N</div>
-                <span id="room-display" class="font-bold">Room</span>
+                <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center font-bold" id="room-icon">#</div>
+                <div>
+                    <h1 id="room-display" class="font-bold text-sm">Room</h1>
+                    <span id="user-display" class="text-[10px] text-blue-400"></span>
+                </div>
             </div>
             <div class="flex gap-2">
-                <button id="call-btn" class="bg-blue-600/20 text-blue-400 p-2 px-4 rounded-full text-xs font-bold border border-blue-500/30">Start Call</button>
-                <button onclick="location.reload()" class="bg-red-500/10 text-red-500 p-2 px-4 rounded-full text-xs font-bold">Exit</button>
+                <button id="call-btn" class="bg-green-600/20 text-green-500 p-2 px-4 rounded-full text-xs font-bold border border-green-500/30">Start Video</button>
+                <button onclick="location.reload()" class="bg-slate-800 p-2 px-4 rounded-xl text-xs font-bold text-slate-400">Exit</button>
             </div>
         </header>
 
-        <div id="messages" class="flex-1 overflow-y-auto p-4 space-y-4 transition-all duration-500">
-            </div>
+        <div id="messages" class="space-y-4"></div>
 
-        <footer class="p-4 bg-slate-900 border-t border-slate-800">
-            <div class="flex items-center gap-2 bg-slate-800 p-2 rounded-2xl">
-                <textarea id="msg-input" rows="1" placeholder="Type a message..." class="flex-1 bg-transparent p-2 outline-none text-sm resize-none"></textarea>
-                <button id="send-btn" class="bg-blue-600 p-2.5 rounded-xl text-white">
-                    <svg viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
+        <footer class="p-4 bg-slate-900 border-t border-slate-800 shrink-0">
+            <div class="flex items-end gap-2 bg-slate-800 p-2 rounded-2xl border border-slate-700">
+                <label class="cursor-pointer p-3 text-slate-400 hover:text-blue-400 shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                    <input type="file" id="image-input" class="hidden" accept="image/*">
+                </label>
+                <textarea id="msg-input" rows="1" placeholder="Type a message..." class="flex-1 bg-transparent p-3 outline-none resize-none text-sm"></textarea>
+                <button id="send-btn" class="bg-blue-600 p-3 rounded-xl text-white hover:bg-blue-500 transition active:scale-90 shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
                 </button>
             </div>
         </footer>
@@ -120,9 +133,10 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, where, onSnapshot, orderBy, serverTimestamp, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, where, onSnapshot, orderBy, serverTimestamp, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
 
-        // Firebase Config (Aapki Same Details)
+        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyD3HUZgZ1G2hN4BXnIbRV8eD0nPlWUaByM",
             authDomain: "galk-55f49.firebaseapp.com",
@@ -134,86 +148,51 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const storage = getStorage(app);
 
-        let currentRoom, userName, localStream, peerConnection;
-        const servers = { iceServers: [{ urls: ['stun:stun1.l.google.com:19302'] }] };
+        let currentRoom = "", userName = "", localStream, peerConnection;
+        const servers = { iceServers: [{ urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'] }] };
 
-        // UI Controls
+        // --- Core Functions ---
         document.getElementById('join-btn').onclick = () => {
             currentRoom = document.getElementById('room-input').value.trim().toLowerCase();
             userName = document.getElementById('user-input').value.trim();
+
             if (currentRoom && userName) {
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('chat-ui').classList.remove('hidden');
                 document.getElementById('room-display').innerText = currentRoom;
+                document.getElementById('room-icon').innerText = currentRoom.charAt(0).toUpperCase();
+                document.getElementById('user-display').innerText = `as ${userName}`;
                 listenMessages();
-                setupReceiver();
-            }
-        };
-
-        // WebRTC Logic
-        async function startCall() {
-            document.getElementById('video-frame').style.display = 'block';
-            document.getElementById('messages').classList.add('messages-shift');
-            
-            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            document.getElementById('local-video').srcObject = localStream;
-
-            peerConnection = new RTCPeerConnection(servers);
-            localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
-            peerConnection.ontrack = e => document.getElementById('remote-video').srcObject = e.streams[0];
-
-            const offer = await peerConnection.createOffer();
-            await peerConnection.setLocalDescription(offer);
-            await setDoc(doc(db, "calls", currentRoom), { offer });
-        }
-
-        function setupReceiver() {
-            onSnapshot(doc(db, "calls", currentRoom), async (snap) => {
-                const data = snap.data();
-                if (data?.offer && !peerConnection) {
-                    if(confirm("Join Video Call?")) {
-                        startCall(); // Simplified for P2P handshake
-                        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
-                        const answer = await peerConnection.createAnswer();
-                        await peerConnection.setLocalDescription(answer);
-                        await setDoc(doc(db, "calls", currentRoom), { answer }, { merge: true });
-                    }
-                }
-                if (data?.answer && peerConnection) {
-                    peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
-                }
-            });
-        }
-
-        // Feature: Minimize
-        window.minimizeVideo = () => {
-            const frame = document.getElementById('video-frame');
-            const msgs = document.getElementById('messages');
-            if(frame.style.height === '40%') {
-                frame.style.height = '120px';
-                msgs.style.marginTop = '130px';
+                listenForCalls();
             } else {
-                frame.style.height = '40%';
-                msgs.style.marginTop = '42%';
+                alert("Please fill in both fields.");
             }
         };
 
-        window.toggleMic = () => {
-            const t = localStream.getAudioTracks()[0];
-            t.enabled = !t.enabled;
-            document.getElementById('mic-btn').innerText = t.enabled ? '🎤' : '🔇';
-        };
+        // --- Chat Logic ---
+        function listenMessages() {
+            const q = query(collection(db, "chats"), where("room", "==", currentRoom), orderBy("timestamp", "asc"));
+            onSnapshot(q, (snap) => {
+                const msgDiv = document.getElementById('messages');
+                msgDiv.innerHTML = "";
+                snap.forEach((doc) => {
+                    const data = doc.data();
+                    const isMe = data.user === userName;
+                    const wrapper = document.createElement('div');
+                    wrapper.className = `flex w-full ${isMe ? 'justify-end' : 'justify-start'} animate-in fade-in`;
+                    wrapper.innerHTML = `
+                        <div class="max-w-[85%] ${isMe ? 'bg-blue-600 rounded-2xl rounded-tr-none' : 'bg-slate-800 rounded-2xl rounded-tl-none'} p-3 shadow-lg">
+                            <p class="text-[9px] font-black uppercase opacity-50 mb-1">${data.user}</p>
+                            ${data.type === 'text' ? `<p class="text-sm">${data.content}</p>` : `<img src="${data.content}" class="rounded-lg max-h-60 object-contain">`}
+                        </div>`;
+                    msgDiv.appendChild(wrapper);
+                });
+                msgDiv.scrollTop = msgDiv.scrollHeight;
+            }, (err) => console.error("Firestore error:", err));
+        }
 
-        window.toggleCam = () => {
-            const t = localStream.getVideoTracks()[0];
-            t.enabled = !t.enabled;
-            document.getElementById('cam-btn').innerText = t.enabled ? '📷' : '🚫';
-        };
-
-        document.getElementById('call-btn').onclick = startCall;
-
-        // --- Original Chat Logic (Simplified) ---
         async function sendMessage() {
             const text = document.getElementById('msg-input').value.trim();
             if (text) {
@@ -222,25 +201,82 @@
             }
         }
         document.getElementById('send-btn').onclick = sendMessage;
+        document.getElementById('msg-input').onkeydown = (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } };
 
-        function listenMessages() {
-            const q = query(collection(db, "chats"), where("room", "==", currentRoom), orderBy("timestamp", "asc"));
-            onSnapshot(q, (snapshot) => {
-                const msgDiv = document.getElementById('messages');
-                msgDiv.innerHTML = "";
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    const isMe = data.user === userName;
-                    msgDiv.innerHTML += `<div class="flex ${isMe ? 'justify-end' : 'justify-start'}">
-                        <div class="max-w-[80%] ${isMe ? 'bg-blue-600' : 'bg-slate-800'} p-3 rounded-2xl">
-                            <p class="text-xs opacity-50 mb-1">${data.user}</p>
-                            <p class="text-sm">${data.content}</p>
-                        </div>
-                    </div>`;
-                });
-                msgDiv.scrollTop = msgDiv.scrollHeight;
+        // Image Logic
+        document.getElementById('image-input').onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const storageRef = ref(storage, `chats/${currentRoom}/${Date.now()}`);
+            const uploadTask = await uploadBytes(storageRef, file);
+            const url = await getDownloadURL(uploadTask.ref);
+            await addDoc(collection(db, "chats"), { room: currentRoom, user: userName, content: url, type: 'image', timestamp: serverTimestamp() });
+        };
+
+        // --- Video Call (WebRTC) Logic ---
+        async function setupMedia() {
+            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            document.getElementById('local-video').srcObject = localStream;
+            document.getElementById('video-frame').style.display = 'block';
+            document.getElementById('messages').classList.add('shifted-messages');
+        }
+
+        async function createCall() {
+            await setupMedia();
+            peerConnection = new RTCPeerConnection(servers);
+            localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
+
+            peerConnection.ontrack = (e) => document.getElementById('remote-video').srcObject = e.streams[0];
+
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+
+            await setDoc(doc(db, "calls", currentRoom), { offer });
+
+            onSnapshot(doc(db, "calls", currentRoom), (snap) => {
+                const data = snap.data();
+                if (!peerConnection.currentRemoteDescription && data?.answer) {
+                    peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+                }
             });
         }
-    </script>
-</body>
-</html>
+
+        function listenForCalls() {
+            onSnapshot(doc(db, "calls", currentRoom), async (snap) => {
+                const data = snap.data();
+                if (data?.offer && !peerConnection) {
+                    if (confirm("Join Incoming Video Call?")) {
+                        await setupMedia();
+                        peerConnection = new RTCPeerConnection(servers);
+                        localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
+                        peerConnection.ontrack = (e) => document.getElementById('remote-video').srcObject = e.streams[0];
+
+                        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+                        const answer = await peerConnection.createAnswer();
+                        await peerConnection.setLocalDescription(answer);
+                        await setDoc(doc(db, "calls", currentRoom), { answer }, { merge: true });
+                    }
+                }
+            });
+        }
+
+        document.getElementById('call-btn').onclick = createCall;
+
+        // Video Controls
+        document.getElementById('mic-btn').onclick = () => {
+            const track = localStream.getAudioTracks()[0];
+            track.enabled = !track.enabled;
+            document.getElementById('mic-btn').innerText = track.enabled ? '🎤' : '🔇';
+        };
+        document.getElementById('cam-btn').onclick = () => {
+            const track = localStream.getVideoTracks()[0];
+            track.enabled = !track.enabled;
+            document.getElementById('cam-btn').innerText = track.enabled ? '📷' : '🚫';
+        };
+        document.getElementById('size-btn').onclick = () => {
+            const frame = document.getElementById('video-frame');
+            const msg = document.getElementById('messages');
+            if (frame.style.height === '120px') {
+                frame.style.height = '45%';
+                msg.style.marginTop = '50vh';
+            } else {
