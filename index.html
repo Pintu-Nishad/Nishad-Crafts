@@ -1,293 +1,128 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nishad Private Chat & Video</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .chat-container { height: 100dvh; }
-        #messages::-webkit-scrollbar { width: 4px; }
-        #messages::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 10px; }
-
-        /* Snapchat Style Video Frame */
-        #video-frame {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            right: 10px;
-            height: 35%;
-            background: #000;
-            border-radius: 24px;
-            overflow: hidden;
-            z-index: 40;
-            display: none;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        #remote-video { width: 100%; height: 100%; object-fit: cover; }
-
-        #local-video-container {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            width: 80px;
-            aspect-ratio: 3/4;
-            border-radius: 12px;
-            overflow: hidden;
-            border: 2px solid #3b82f6;
-            z-index: 45;
-        }
-
-        #local-video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
-
-        .video-controls {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            z-index: 50;
-        }
-
-        .control-btn {
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(8px);
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid rgba(255,255,255,0.2);
-            font-size: 14px;
-        }
-
-        /* Message area adjustment when video is active */
-        .msg-with-video { margin-top: 40% !important; transition: all 0.4s ease; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nishad Private Chat</title>
+<script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-950 text-white overflow-hidden">
 
-    <div id="login-screen" class="fixed inset-0 bg-slate-950 flex items-center justify-center z-[100] p-6">
-        <div class="bg-slate-900 p-8 rounded-3xl shadow-2xl w-full max-w-md border border-slate-800">
-            <div class="text-center mb-8">
-                <h2 class="text-3xl font-extrabold text-blue-500">Join Chat</h2>
-                <p class="text-slate-400 text-sm mt-2">Enter room to start video & chat</p>
-            </div>
-            <div class="space-y-4">
-                <input type="text" id="room-input" placeholder="Room Name (e.g. nishad1)" 
-                       class="w-full p-4 bg-slate-800 border border-slate-700 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600">
-                <input type="text" id="user-input" placeholder="Your Nickname" 
-                       class="w-full p-4 bg-slate-800 border border-slate-700 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600">
-                <button id="join-btn" class="w-full bg-blue-600 hover:bg-blue-700 p-4 rounded-2xl font-bold text-lg transition-all active:scale-95">
-                    Start Now
-                </button>
-            </div>
-        </div>
+<body class="bg-slate-950 text-white">
+
+<div id="login" class="h-screen flex items-center justify-center">
+    <div class="bg-slate-900 p-6 rounded-xl">
+        <input id="room" placeholder="Room" class="p-2 m-2 text-black">
+        <input id="name" placeholder="Name" class="p-2 m-2 text-black">
+        <button id="join" class="bg-blue-500 p-2">Join</button>
     </div>
+</div>
 
-    <div id="chat-ui" class="hidden chat-container flex flex-col max-w-2xl mx-auto bg-slate-900 relative">
-        
-        <div id="video-frame">
-            <video id="remote-video" autoplay playsinline></video>
-            <div id="local-video-container">
-                <video id="local-video" autoplay playsinline muted></video>
-            </div>
-            <div class="video-controls">
-                <button onclick="toggleMic()" id="mic-btn" class="control-btn">🎤</button>
-                <button onclick="toggleCam()" id="cam-btn" class="control-btn">📷</button>
-                <button onclick="toggleSize()" class="control-btn">↔️</button>
-            </div>
-        </div>
+<div id="chat" class="hidden p-4">
+    <h2 id="roomName"></h2>
+    <p id="typing"></p>
+    <div id="msgs" class="h-[300px] overflow-auto border"></div>
 
-        <header class="p-4 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 flex justify-between items-center shrink-0">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center font-bold" id="room-icon">#</div>
-                <div>
-                    <h1 id="room-display" class="font-bold text-white text-base leading-none">Room</h1>
-                    <span id="user-display" class="text-[10px] text-blue-400 font-medium"></span>
-                </div>
-            </div>
-            <div class="flex gap-2">
-                <button id="call-btn" class="bg-green-600/20 text-green-400 p-2 px-4 rounded-xl text-xs font-bold border border-green-500/30">Video Call</button>
-                <button onclick="location.reload()" class="bg-slate-800 p-2 px-4 rounded-xl text-xs font-bold text-slate-400">Exit</button>
-            </div>
-        </header>
+    <input id="msg" placeholder="Type..." class="text-black p-2">
+    <button id="send">Send</button>
+</div>
 
-        <div id="messages" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getFirestore, collection, addDoc, query, where, onSnapshot, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
-        <footer class="p-4 bg-slate-900 border-t border-slate-800 shrink-0">
-            <div class="flex items-end gap-2 bg-slate-800 p-2 rounded-2xl border border-slate-700">
-                <label class="cursor-pointer p-3 text-slate-400 hover:text-blue-400 transition shrink-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                    <input type="file" id="image-input" class="hidden" accept="image/*">
-                </label>
-                <textarea id="msg-input" rows="1" placeholder="Type a message..." class="flex-1 bg-transparent p-3 outline-none resize-none text-sm"></textarea>
-                <button id="send-btn" class="bg-blue-600 p-3 rounded-xl active:scale-90 transition shadow-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
-                </button>
-            </div>
-        </footer>
-    </div>
+const firebaseConfig = {
+ apiKey: "YOUR_KEY",
+ authDomain: "YOUR_DOMAIN",
+ projectId: "YOUR_ID"
+};
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, where, onSnapshot, orderBy, serverTimestamp, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyD3HUZgZ1G2hN4BXnIbRV8eD0nPlWUaByM",
-            authDomain: "galk-55f49.firebaseapp.com",
-            projectId: "galk-55f49",
-            storageBucket: "galk-55f49.firebasestorage.app",
-            messagingSenderId: "1005825050326",
-            appId: "1:1005825050326:web:fda4271183b4c4ff106b77"
-        };
+let room, name;
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const storage = getStorage(app);
+join.onclick = async () => {
+    room = roomInput.value;
+    name = nameInput.value;
 
-        let currentRoom, userName, localStream, peerConnection;
-        const servers = { iceServers: [{ urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302'] }] };
+    login.classList.add("hidden");
+    chat.classList.remove("hidden");
 
-        const msgDiv = document.getElementById('messages');
-        const msgInput = document.getElementById('msg-input');
+    listenMsgs();
+    online();
+    typingListen();
 
-        // Join Room
-        document.getElementById('join-btn').onclick = async () => {
-            currentRoom = document.getElementById('room-input').value.trim().toLowerCase();
-            userName = document.getElementById('user-input').value.trim();
+    await setDoc(doc(db,"online",name),{room});
+};
 
-            if (currentRoom && userName) {
-                document.getElementById('login-screen').classList.add('hidden');
-                document.getElementById('chat-ui').classList.remove('hidden');
-                document.getElementById('room-display').innerText = currentRoom;
-                document.getElementById('user-display').innerText = `as ${userName}`;
-                
-                listenMessages();
-                listenForCalls();
-            } else {
-                alert("Please fill details");
+send.onclick = async () => {
+    const text = msg.value;
+    msg.value="";
+
+    await addDoc(collection(db,"chats"),{
+        room,
+        user:name,
+        text,
+        time:new Date(),
+        seen:[]
+    });
+};
+
+function listenMsgs(){
+    const q = query(collection(db,"chats"), where("room","==",room));
+
+    onSnapshot(q,snap=>{
+        msgs.innerHTML="";
+        snap.forEach(d=>{
+            const data = d.data();
+
+            if(!data.seen.includes(name)){
+                setDoc(doc(db,"chats",d.id),{
+                    seen:[...data.seen,name]
+                },{merge:true});
             }
-        };
 
-        // Send Text
-        async function sendMessage() {
-            const text = msgInput.value.trim();
-            if (text) {
-                msgInput.value = "";
-                await addDoc(collection(db, "chats"), {
-                    room: currentRoom,
-                    user: userName,
-                    content: text,
-                    type: 'text',
-                    timestamp: serverTimestamp()
-                });
+            let t = new Date(data.time).toLocaleTimeString();
+
+            msgs.innerHTML += `
+            <div>
+                <b>${data.user}</b>: ${data.text}
+                <small>${t}</small>
+                ${data.user===name ? (data.seen.length>1?"✔✔":"✔"):""}
+            </div>`;
+        });
+    });
+}
+
+function online(){
+    onSnapshot(collection(db,"online"),snap=>{
+        let count=0;
+        snap.forEach(d=>{
+            if(d.data().room===room) count++;
+        });
+        roomName.innerText = room + " ("+count+" online)";
+    });
+}
+
+msg.addEventListener("input", async ()=>{
+    await setDoc(doc(db,"typing",name),{
+        room,
+        typing: msg.value.length>0
+    });
+});
+
+function typingListen(){
+    onSnapshot(collection(db,"typing"),snap=>{
+        let t="";
+        snap.forEach(d=>{
+            if(d.data().room===room && d.data().typing && d.id!==name){
+                t = d.id + " typing...";
             }
-        }
-        document.getElementById('send-btn').onclick = sendMessage;
-        msgInput.onkeydown = (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } };
+        });
+        typing.innerText = t;
+    });
+}
+</script>
 
-        // Real-time Chat
-        function listenMessages() {
-            const q = query(collection(db, "chats"), where("room", "==", currentRoom), orderBy("timestamp", "asc"));
-            onSnapshot(q, (snapshot) => {
-                msgDiv.innerHTML = "";
-                snapshot.forEach((doc) => {
-                    const data = doc.data();
-                    const isMe = data.user === userName;
-                    const wrapper = document.createElement('div');
-                    wrapper.className = `flex w-full ${isMe ? 'justify-end' : 'justify-start'}`;
-                    wrapper.innerHTML = `
-                        <div class="max-w-[85%] ${isMe ? 'bg-blue-600' : 'bg-slate-800'} p-3 rounded-2xl ${isMe ? 'rounded-tr-none' : 'rounded-tl-none'} shadow-md">
-                            <p class="text-[9px] font-bold opacity-50 mb-1">${isMe ? 'YOU' : data.user}</p>
-                            ${data.type === 'text' ? `<p class="text-sm">${data.content}</p>` : `<img src="${data.content}" class="rounded-lg max-h-64">`}
-                        </div>`;
-                    msgDiv.appendChild(wrapper);
-                });
-                msgDiv.scrollTop = msgDiv.scrollHeight;
-            });
-        }
-
-        // WebRTC Video Call
-        async function startCall() {
-            document.getElementById('video-frame').style.display = 'block';
-            document.getElementById('messages').classList.add('msg-with-video');
-
-            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            document.getElementById('local-video').srcObject = localStream;
-
-            peerConnection = new RTCPeerConnection(servers);
-            localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
-
-            peerConnection.ontrack = (event) => {
-                document.getElementById('remote-video').srcObject = event.streams[0];
-            };
-
-            const offer = await peerConnection.createOffer();
-            await peerConnection.setLocalDescription(offer);
-
-            await setDoc(doc(db, "calls", currentRoom), { offer });
-        }
-
-        function listenForCalls() {
-            onSnapshot(doc(db, "calls", currentRoom), async (snap) => {
-                const data = snap.data();
-                if (data?.offer && !peerConnection) {
-                    if(confirm("Incoming Video Call... Accept?")) {
-                        await startCall();
-                        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
-                        const answer = await peerConnection.createAnswer();
-                        await peerConnection.setLocalDescription(answer);
-                        await setDoc(doc(db, "calls", currentRoom), { answer }, { merge: true });
-                    }
-                }
-                if (data?.answer && peerConnection) {
-                    await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
-                }
-            });
-        }
-
-        document.getElementById('call-btn').onclick = startCall;
-
-        // Video Controls
-        window.toggleMic = () => {
-            const track = localStream.getAudioTracks()[0];
-            track.enabled = !track.enabled;
-            document.getElementById('mic-btn').innerText = track.enabled ? '🎤' : '🔇';
-        };
-
-        window.toggleCam = () => {
-            const track = localStream.getVideoTracks()[0];
-            track.enabled = !track.enabled;
-            document.getElementById('cam-btn').innerText = track.enabled ? '📷' : '🚫';
-        };
-
-        window.toggleSize = () => {
-            const frame = document.getElementById('video-frame');
-            const msgs = document.getElementById('messages');
-            if (frame.style.height === '120px') {
-                frame.style.height = '35%';
-                msgs.style.marginTop = '40%';
-            } else {
-                frame.style.height = '120px';
-                msgs.style.marginTop = '140px';
-            }
-        };
-
-        // Image Upload
-        document.getElementById('image-input').onchange = async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const sRef = ref(storage, `chats/${Date.now()}_${file.name}`);
-            const uploadTask = await uploadBytes(sRef, file);
-            const url = await getDownloadURL(uploadTask.ref);
-            await addDoc(collection(db, "chats"), { room: currentRoom, user: userName, content: url, type: 'image', timestamp: serverTimestamp() });
-        };
-    </script>
 </body>
 </html>
